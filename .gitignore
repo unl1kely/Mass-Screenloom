@@ -179,5 +179,8 @@ screenshots/*.jpg
 screenshots/*.jpeg
 output/*
 *.mp4
+*.webm
 *.mov
 creds.json
+credentials.json
+*.pickle
