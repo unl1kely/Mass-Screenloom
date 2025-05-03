@@ -1,12 +1,12 @@
 from pyperclip import copy as copy_to_clipboard
 from tkinter import filedialog
 import urllib.parse
+import subprocess
 import pyautogui
 import requests
 import platform
 import time
 import csv
-
 
 VERBOSE = True
 WEBPAGE_LOADING_TIME = "10" # int
