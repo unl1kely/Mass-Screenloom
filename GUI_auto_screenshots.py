@@ -1,13 +1,15 @@
 from pyperclip import copy as copy_to_clipboard
 from tkinter import filedialog
+import urllib.parse
 import pyautogui
 import requests
+import platform
 import time
 import csv
 
 
 VERBOSE = True
-WEBPAGE_LOADING_TIME = int()
+WEBPAGE_LOADING_TIME = "10" # int
 MODIFIER_KEY = str()
 LEADLIST = None
 OUTPUT_DIR = str()
@@ -15,7 +17,9 @@ OUTPUT_DIR = str()
 LEADS_FILEPATH = str()
 
 guidelines = """Make sure your browser is already logged in to these platforms: Twitter/X, Facebook, LinkedIn.
-Make sure you have your browser active with ONLY one tab being : the agency website."""
+Make sure you have your browser active with ONLY one tab being : the agency website.
+Close any Facebook discussion bubble you have in your account.
+"""
 
 class Leadlist:
 	def __init__(self, filepath:str):
@@ -35,8 +39,11 @@ class Leadlist:
 
 	def getShortestKey(self, keyword):
 		filtered_keys = [key for key in self.csv_data[0].keys() if keyword in key.lower()]
-		# Return the key with the lowest number of characters, or None if no such key exists
-		return min(filtered_keys, key=len) if filtered_keys else None
+		if filtered_keys:
+			# Return the key with the lowest number of characters
+			return min(filtered_keys, key=len)
+		else:
+			raise IndexError(f"Key {keyword} not found!")
 
 	def verify(self)->list[dict]:
 		REQUIRED_COLUMNS = ['WEBSITE', 'EMAIL']
@@ -52,6 +59,7 @@ class Leadlist:
 		else:
 			self.website_key = self.getShortestKey("website")
 			self.email_key = self.getShortestKey("email")
+			self.name_key = self.getShortestKey("company name")
 		# PROHIBITED_COLUMNS
 		if any(column_name in self.columns_upper for column_name in PROHIBITED_COLUMNS):
 			print("Prohibited column detected. Aborting...")
@@ -95,7 +103,6 @@ def load_leadlist()->list[dict]:
 
 # Detect the operating system
 def detect_modifier_key():
-	import platform
 	global MODIFIER_KEY
 	if platform.system() == "Darwin":  # macOS
 		MODIFIER_KEY = 'command'
@@ -124,6 +131,13 @@ def countdown(seconds=5):
 def blank_tab():
 	pyautogui.hotkey(MODIFIER_KEY, 't')
 
+def close_tabs(number_of_tabs:int):
+	if number_of_tabs<1:
+		raise ValueError("Function parameter <number_of_tabs> must be greater than 0.")
+	for i in range(number_of_tabs):
+		pyautogui.hotkey(MODIFIER_KEY, 'w')
+		time.sleep(0.1)
+
 def select_URL_Bar():
 	pyautogui.hotkey(MODIFIER_KEY, 'l')
 
@@ -143,8 +157,10 @@ def open_tab(url:str):
 is_link = lambda string : string.startswith(('http://', 'https://', 'www.')) and '.' in string
 
 def check_link(link:str)->bool:
+	if not is_link(link):
+		return False
 	try:
-		response = requests.head(link, allow_redirects=True, timeout=5)  # Use HEAD to check the link
+		response = requests.head(link, allow_redirects=True, timeout=WEBPAGE_LOADING_TIME)  # Use HEAD to check the link
 		# Check if the status code starts with 2
 		if str(response.status_code).startswith('2'):
 			return True
@@ -155,14 +171,20 @@ def check_link(link:str)->bool:
 		return None
 
 def get_links(lead:dict):
-	valid_links = [v for k, v in lead.items() if is_link(v) and k != LEADLIST.website_key]
-	links = [link for link in valid_links if check_link(link)]
+	links = [v for k, v in lead.items() if k != LEADLIST.website_key and check_link(v)]
+	popped_facebook = [links.pop(i) for i in range(len(links)) if "facebook.com/" in links[i]]
 	website = lead[LEADLIST.website_key]
-	if check_link(website) or len(links)==0:
-		links.append(website)
+	if check_link(website):
+		links.append(website) # add last to show
+	elif len(links)==0:	# no links besides fb
+		if popped_facebook:
+			links.append(popped_facebook[0])
+		else: # no website no fb no links
+			# must have something to show. Company Name
+			links.append(f"https://www.google.com/search?q={urllib.parse.quote(lead[LEADLIST.name_key])}")
 	return links
 
-screenshot_saving_name = lambda lead : OUTPUT_DIR + '/' + lead[LEADLIST.email_key].split('@')[-1] + ".png"
+screenshot_saving_name = lambda lead : OUTPUT_DIR + '/' + lead[LEADLIST.email_key] + ".png"
 
 def screenshot_of_lead(lead:dict):
 	links = get_links(lead)
@@ -171,6 +193,22 @@ def screenshot_of_lead(lead:dict):
 		open_tab(link)
 	time.sleep(WEBPAGE_LOADING_TIME)
 	pyautogui.screenshot(screenshot_saving_name(lead))
+	close_tabs(len(links))
+
+def shutdown():
+	os_type = platform.system()
+	try:
+		if os_type == "Windows":
+			subprocess.run(["shutdown", "/s", "/t", "0"], check=True)
+		elif os_type == "Darwin":  # macOS
+			subprocess.run(["shutdown", "-h", "now"], check=True)
+		elif os_type == "Linux":
+			subprocess.run(["shutdown", "now"], check=True)
+		else:
+			print("Unsupported OS")
+	except subprocess.CalledProcessError as e:
+		print(f"Error occurred: {e}")
+
 
 def launch_loop():
 	print("Loading lead list...")
@@ -196,6 +234,7 @@ def launch_loop():
 		#print(f"Error while looping leads : {e}")
 		print(f"Last processed lead : {i}")
 	print(f"Done with {i} leads.")
+	shutdown()
 
 if __name__ == '__main__':
 	launch_loop()
