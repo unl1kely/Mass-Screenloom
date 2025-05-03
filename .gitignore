@@ -178,6 +178,7 @@ screenshots/*.png
 screenshots/*.jpg
 screenshots/*.jpeg
 output/*
+input/*
 *.mp4
 *.webm
 *.mov

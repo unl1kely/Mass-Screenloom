@@ -1,2 +1,6 @@
 moviepy
 opencv-python
+pyperclip
+pyautogui
+Pillow
+csv
