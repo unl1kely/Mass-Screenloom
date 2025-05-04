@@ -1,9 +1,5 @@
 from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip
-#from moviepy.video.VideoClip import ColorClip
 from make_webcam_component import *
-#from moviepy.video.fx.all import crop
-#from moviepy.video.fx import Crop as crop
-#import numpy as np
 from tkinter import filedialog
 import subprocess
 import logging
@@ -59,7 +55,6 @@ def prompt_output_folder():
     global OUTPUT_DIR
     while not OUTPUT_DIR:
         OUTPUT_DIR = filedialog.askdirectory(title="Select where to save the looms...")
-#os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def prompt_screenshots_folder():
     global SCREENSHOTS_DIR
@@ -88,13 +83,11 @@ class Machine:
         if VERBOSE: print(f"Loaded Webcam Duration : {self.duration}")
     
     def generate_command(self, screenshot_filepath:str, output_mp4:str):
+        return f'ffmpeg -loop 1 -t {self.duration} -i {screenshot_filepath} -i {self.webcam_filename} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=W-w:H-h:shortest=1" -c:v libx264 -preset superfast -crf 26 -pix_fmt yuv420p {output_mp4}'
         # works bottom right (with gaps):
-        return f'ffmpeg -loop 1 -t {self.duration} -i {screenshot_filepath} -i {self.webcam_filename} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=W-w-10:H-h-10:shortest=1" -c:v libx264 -preset superfast -crf 26 -pix_fmt yuv420p {output_mp4}'
+        #return f'ffmpeg -loop 1 -t {self.duration} -i {screenshot_filepath} -i {self.webcam_filename} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=W-w-10:H-h-10:shortest=1" -c:v libx264 -preset superfast -crf 26 -pix_fmt yuv420p {output_mp4}'
         # works bottom left (with gaps):
         #return f'ffmpeg -loop 1 -t {self.duration} -i {screenshot_filepath} -i {self.webcam_filename} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=10:H-h-10:shortest=1" -c:v libx264 -preset superfast -crf 26 -pix_fmt yuv420p {output_mp4}'
-        #return f'ffmpeg -i {screenshot_filepath} -stream_loop -1 -i {webcam_mp4} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=10:H-h-10:shortest=1" -c:v libx264 -preset ultrafast -crf 23 -pix_fmt yuv420p {output_mp4}'
-        #return f'ffmpeg -loop 1 -t 40 -i {screenshot_filepath} -i {webcam_mp4} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=10:H-h-10:shortest=1" -c:v libx264 -preset ultrafast -crf 23 -pix_fmt yuv420p {output_mp4}'
-
     def generate_with_moviepy(self, screenshot_filepath, video_number:int):
         # Load webcam video (before)
         #webcam_clip = VideoFileClip(WEBCAM_VIDEO_PATH).resize(height=300)  # Resize to smaller thumbnail
@@ -154,10 +147,10 @@ class Machine:
 def test():
     prompt_webcam_file()
     prompt_output_folder()
-    machine = Machine(SCREENSHOTS_DIR, WEBCAM_VIDEO_PATH, OUTPUT_DIR ,"test_machine_clean_%.mp4")
+    machine = Machine(SCREENSHOTS_DIR, WEBCAM_VIDEO_PATH, OUTPUT_DIR ,"test_many_%.mp4")
     machine.getDuration()
-    test_bg = os.path.join(SCREENSHOTS_DIR, os.listdir(SCREENSHOTS_DIR)[0])
-    machine.generate_loom(test_bg, 12)
+    #machine.generate_loom(test_bg, 12)
+    machine.launch()
 
 def main():
     test()
