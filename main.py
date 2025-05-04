@@ -20,7 +20,6 @@ COMPOSE_WITH_FFMPEG = True
 VERBOSE = True
 
 # VARS
-cropped_SD = "webcam_circle_SD.mov"
 WEBCAM_VIDEO_PATH = str()
 OUTPUT_DIR = str()
 SCREENSHOTS_DIR = "screenshots"
@@ -143,14 +142,11 @@ class Machine:
                 screenshot_filepath=screenshot_filepath,
                 video_number=i+1
             )
-            if OPERATION_STATUS==0:
-                errors_count = 0
-            else:
-                errors_count += 1
+            errors_count = 0 if OPERATION_STATUS == 0 else errors_count + 1
 
             if errors_count >= 3:
-                print("Reached 3 errors. Exiting...")
-                logging.error("Reached 3 errors. Exiting...")
+                print("Reached 3 failed looms. Aborting...")
+                logging.error("Reached 3 failed looms. Aborting...")
                 return False
         return True
 
