@@ -12,7 +12,7 @@ VERBOSE = True
 WEBPAGE_LOADING_TIME = "10" # int
 MODIFIER_KEY = str()
 LEADLIST = None
-OUTPUT_DIR = str()
+SCREENSHOTS_DIR = str()
 
 LEADS_FILEPATH = str()
 
@@ -116,10 +116,10 @@ def prompt_wait_time():
 		user_input = input("Enter web page loading time (seconds)\n> ")
 	WEBPAGE_LOADING_TIME = int(user_input)
 
-def prompt_output_folder():
-	global OUTPUT_DIR
-	while not OUTPUT_DIR:
-		OUTPUT_DIR = filedialog.askdirectory(title="Select where to save the screenshots...")
+def prompt_screenshots_folder():
+	global SCREENSHOTS_DIR
+	while not SCREENSHOTS_DIR:
+		SCREENSHOTS_DIR = filedialog.askdirectory(title="Select where to save the screenshots...")
 
 # Countdown timer to give the user time to select the browser
 def countdown(seconds=5):
@@ -184,7 +184,7 @@ def get_links(lead:dict):
 			links.append(f"https://www.google.com/search?q={urllib.parse.quote(lead[LEADLIST.name_key])}")
 	return links
 
-screenshot_saving_name = lambda lead : OUTPUT_DIR + '/' + lead[LEADLIST.email_key] + ".png"
+screenshot_saving_name = lambda lead : SCREENSHOTS_DIR + '/' + lead[LEADLIST.email_key] + ".png"
 
 def screenshot_of_lead(lead:dict):
 	links = get_links(lead)
@@ -214,7 +214,7 @@ def launch_loop():
 	print("Loading lead list...")
 	load_leadlist()
 	print("Loading screenshots folder...")
-	prompt_output_folder()
+	prompt_screenshots_folder()
 	#
 	print("Detecting modifier key...")
 	detect_modifier_key()
