@@ -27,7 +27,7 @@ METADATA_ACCESS = "https://www.googleapis.com/auth/drive.metadata.readonly"
 
 def authenticate_oauth()->googleapiclient.discovery.Resource|None:
     global SERVICE
-    scopes = [FILE_SPECIFIC_ACCESS]
+    scopes = [FULL_ACCESS_SCOPE] # to check if folder exists.
     creds = None
     if VERBOSE: print("Auth...")
     # Check if the token file exists
@@ -90,6 +90,7 @@ def folder_exists(service:googleapiclient.discovery.Resource, folder_id:str)->bo
         return True  # Folder exists
     except Exception as e:
         # If the folder does not exist, an error will be raised
+        logging.error(str(e))
         return False  # Folder does not exist
 
 def prompt_uploading_folder_link(): # UPLOADING_FOLDER_ID
@@ -148,16 +149,12 @@ def authenticate_and_upload(auth_function, filepath:str, folder_id:str, upload_n
 def test()->None:
     video_filepath = "output/test_many_2.mp4"  # Local path to the video
     upload_name = "Test load pickle.mp4"  # Name of the file when uploaded
+    authenticate_oauth()
     prompt_uploading_folder_link() # output : folder id
-    link = authenticate_and_upload(authenticate_oauth, video_filepath, UPLOADING_FOLDER_ID, upload_name)
-    if link:
-        print(f"Shareable link: {link}")
-    else:
-        print("Failed to upload the video.")
+    #link = authenticate_and_upload(authenticate_oauth, video_filepath, UPLOADING_FOLDER_ID, upload_name)
 
 def main():
-    pass
-    #test()
+    test()
 
 # Example usage
 if __name__ == "__main__":
