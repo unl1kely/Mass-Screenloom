@@ -205,8 +205,7 @@ def connect_local_loom(lead:dict, loom_filepath:str)->None:
 	LEADLIST.update_csv()
 
 def no_local_loom(lead):
-	lead[LOOM_FILEPATH_KEY] = ""
-	LEADLIST.update_csv()
+	connect_local_loom(lead, "")
 
 def screenshot_of_lead(lead:dict):
 	SCREENSHOT_SUCCESS = None

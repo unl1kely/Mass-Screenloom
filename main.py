@@ -2,6 +2,8 @@ import GUI_auto_screenshots
 import renderer
 import drive
 
+LOOM_LINK_KEY = "loom_link"
+
 def preparation():
 	# screenshots prep
 	GUI_auto_screenshots.load_leadlist()
@@ -25,18 +27,25 @@ def preparation():
 	drive.authenticate_oauth() # SERVICE auth google account & Mass Screenloom app
 	drive.prompt_uploading_folder_link() # UPLOADING_FOLDER_ID
 
+def make_shared_loom_name(lead:dict)->str:
+	pass
+
+def connect_loom_link(lead:dict, link:str):
+	lead[LOOM_LINK_KEY] = link
+	GUI_auto_screenshots.LEADLIST.update_csv()
+
 def upload_and_link():
-	for row in GUI_auto_screenshots.LEADLIST.csv_data:
-		loom_filepath = row[GUI_auto_screenshots.LOOM_FILEPATH_KEY]
-		uploaded_loom_name = ""
-		link = drive.upload_public_video(drive.SERVICE, loom_filepath, drive.UPLOADING_FOLDER_ID, uploaded_loom_name)
+	UPLOADED_LOOMS_COUNT = 0
+	for lead in GUI_auto_screenshots.LEADLIST.csv_data:
+		loom_filepath = lead[GUI_auto_screenshots.LOOM_FILEPATH_KEY]
+		shared_loom_name = make_shared_loom_name(lead)
+		link = drive.upload_public_video(drive.SERVICE, loom_filepath, drive.UPLOADING_FOLDER_ID, shared_loom_name)
 		if link:
-			pass # works
+			connect_loom_link(lead, link)
+			UPLOADED_LOOMS_COUNT += 1
 		else:
-			# none
-			pass
-		connect_lead_loom(link) # undeclared
-		GUI_auto_screenshots.LEADLIST.update_csv() # undeclared
+			# upload failed
+			connect_loom_link(lead, "")
 
 
 def autopilot():
@@ -45,6 +54,7 @@ def autopilot():
 	# rendering
 	machine.launch()
 	# uploading
+	upload_and_link()
 
 def main():
 	preparation()
