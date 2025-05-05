@@ -92,7 +92,6 @@ def folder_exists(service:googleapiclient.discovery.Resource, folder_id:str)->bo
 def prompt_uploading_folder_link():
     global UPLOADING_FOLDER_ID
     uploading_folder_link = str()
-    while not folder_id_from_link(uploading_folder_link):
     while True:
         uploading_folder_link = input("Enter Drive uploading folder link : ")
         UPLOADING_FOLDER_ID = folder_id_from_link(uploading_folder_link)
