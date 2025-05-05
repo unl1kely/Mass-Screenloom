@@ -13,7 +13,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 VERBOSE = True
 GOOGLE_CREDENTIALS_FILEPATH = "credentials.json"
 DRIVE_TOKEN_FILEPATH = "token.pickle"
-UPLOADING_FOLDER_LINK = str()
 UPLOADING_FOLDER_ID = str()
 
 
@@ -27,6 +26,7 @@ METADATA_ACCESS = "https://www.googleapis.com/auth/drive.metadata.readonly"
 def authenticate_oauth()->googleapiclient.discovery.Resource|None:
     scopes = [FILE_SPECIFIC_ACCESS]
     creds = None
+    if VERBOSE: print("Auth...")
     # Check if the token file exists
     token_file_exists = os.path.exists(DRIVE_TOKEN_FILEPATH)
     if token_file_exists:
@@ -73,12 +73,6 @@ def authenticate_service_account()->googleapiclient.discovery.Resource|None:
         logging.error(f"Error authenticating Google Drive service: {e}")
         return None
 
-prompt_uploading_folder_link():
-    global UPLOADING_FOLDER_LINK
-    while not folder_id_from_link(UPLOADING_FOLDER_LINK):
-        UPLOADING_FOLDER_LINK = input("Enter Drive uploading folder link : ")
-
-
 def folder_id_from_link(link:str)->str|None:
     # Drive folders pattern
     pattern = r'^(https://)?(www\.)?drive\.google\.com/drive(/u/\d+)?/folders/([a-zA-Z0-9_-]+)(\?usp=drive_link)?$'
@@ -94,6 +88,18 @@ def folder_exists(service:googleapiclient.discovery.Resource, folder_id:str)->bo
     except Exception as e:
         # If the folder does not exist, an error will be raised
         return False  # Folder does not exist
+
+def prompt_uploading_folder_link():
+    global UPLOADING_FOLDER_ID
+    uploading_folder_link = str()
+    while not folder_id_from_link(uploading_folder_link):
+    while True:
+        uploading_folder_link = input("Enter Drive uploading folder link : ")
+        UPLOADING_FOLDER_ID = folder_id_from_link(uploading_folder_link)
+        if folder_exists(service, UPLOADING_FOLDER_ID):
+            break
+        else:
+            print(f"Folder {uploading_folder_link} does not exist!")
 
 def upload_public_video(service:googleapiclient.discovery.Resource, video_filepath:str, folder_id:str, file_name:str)->str|None:
     """Upload a video file to Google Drive and return the shareable link."""
@@ -139,9 +145,8 @@ def authenticate_and_upload(auth_function, filepath:str, folder_id:str, upload_n
 
 def test()->None:
     video_filepath = "output/test_many_2.mp4"  # Local path to the video
-    CREDENTIALS_FILE = "credentials.json"  # Path to your credentials file
     upload_name = "Test load pickle.mp4"  # Name of the file when uploaded
-    if VERBOSE: print("auth...")
+    prompt_uploading_folder_link() # output : folder id
     link = authenticate_and_upload(authenticate_oauth, video_filepath, UPLOADING_FOLDER_ID, upload_name)
     if link:
         print(f"Shareable link: {link}")
