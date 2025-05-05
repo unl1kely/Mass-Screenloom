@@ -3,6 +3,7 @@ import googleapiclient.discovery
 from google.oauth2 import service_account
 from googleapiclient.http import MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 import os.path
 import pickle
 import re
@@ -14,6 +15,7 @@ VERBOSE = True
 GOOGLE_CREDENTIALS_FILEPATH = "credentials.json"
 DRIVE_TOKEN_FILEPATH = "token.pickle"
 UPLOADING_FOLDER_ID = str()
+SERVICE = None
 
 
 READONLY_SCOPE = "https://www.googleapis.com/auth/drive.readonly"
@@ -24,6 +26,7 @@ METADATA_ACCESS = "https://www.googleapis.com/auth/drive.metadata.readonly"
 
 
 def authenticate_oauth()->googleapiclient.discovery.Resource|None:
+    global SERVICE
     scopes = [FILE_SPECIFIC_ACCESS]
     creds = None
     if VERBOSE: print("Auth...")
@@ -55,9 +58,9 @@ def authenticate_oauth()->googleapiclient.discovery.Resource|None:
                 logging.error(f"Error during authentication: {e}")
                 return None
     try:
-        service = googleapiclient.discovery.build('drive', 'v3', credentials=creds)
+        SERVICE = googleapiclient.discovery.build('drive', 'v3', credentials=creds)
         if VERBOSE: print("Logged in to Google Drive API successfully.")
-        return service
+        return SERVICE
     except Exception as e:
         logging.error(f"Error accessing Google Drive: {e}")
         return None
@@ -67,8 +70,8 @@ def authenticate_service_account()->googleapiclient.discovery.Resource|None:
     """Authenticate and create the Google Drive service."""
     try:
         creds = service_account.Credentials.from_service_account_file(GOOGLE_CREDENTIALS_FILEPATH)
-        service = googleapiclient.discovery.build('drive', 'v3', credentials=creds)
-        return service
+        SERVICE = googleapiclient.discovery.build('drive', 'v3', credentials=creds)
+        return SERVICE
     except Exception as e:
         logging.error(f"Error authenticating Google Drive service: {e}")
         return None
@@ -89,13 +92,13 @@ def folder_exists(service:googleapiclient.discovery.Resource, folder_id:str)->bo
         # If the folder does not exist, an error will be raised
         return False  # Folder does not exist
 
-def prompt_uploading_folder_link():
+def prompt_uploading_folder_link(): # UPLOADING_FOLDER_ID
     global UPLOADING_FOLDER_ID
     uploading_folder_link = str()
     while True:
         uploading_folder_link = input("Enter Drive uploading folder link : ")
         UPLOADING_FOLDER_ID = folder_id_from_link(uploading_folder_link)
-        if folder_exists(service, UPLOADING_FOLDER_ID):
+        if folder_exists(SERVICE, UPLOADING_FOLDER_ID):
             break
         else:
             print(f"Folder {uploading_folder_link} does not exist!")
@@ -158,4 +161,5 @@ def main():
 
 # Example usage
 if __name__ == "__main__":
+    print("drive in main")
     main()

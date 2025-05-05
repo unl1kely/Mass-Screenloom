@@ -195,7 +195,7 @@ def screenshot_of_lead(lead:dict):
 	pyautogui.screenshot(screenshot_saving_name(lead))
 	close_tabs(len(links))
 
-def shutdown():
+def shutdown_computer():
 	os_type = platform.system()
 	try:
 		if os_type == "Windows":
@@ -210,7 +210,7 @@ def shutdown():
 		print(f"Error occurred: {e}")
 
 
-def launch_loop():
+def launch_loop(shutdown:bool):
 	print("Loading lead list...")
 	load_leadlist()
 	print("Loading screenshots folder...")
@@ -234,7 +234,7 @@ def launch_loop():
 		#print(f"Error while looping leads : {e}")
 		print(f"Last processed lead : {i}")
 	print(f"Done with {i} leads.")
-	shutdown()
+	if shutdown: shutdown_computer()
 
 if __name__ == '__main__':
-	launch_loop()
+	launch_loop(shutdown=False)

@@ -8,7 +8,6 @@ import sys
 import os
 
 from mask_generator import mask_generate
-import GUI_auto_screenshots
 
 # Settings
 COMPOSE_WITH_MOVIPY = False
@@ -158,7 +157,9 @@ def test():
     machine.launch()
 
 def main():
-    test()
+    machine = Machine(SCREENSHOTS_DIR, WEBCAM_VIDEO_PATH, OUTPUT_DIR, OUTPUT_FILENAME_FORMAT)
+    machine.getDuration()
+    machine.launch()
 
 if __name__ == '__main__':
     main()
