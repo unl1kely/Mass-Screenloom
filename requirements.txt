@@ -4,3 +4,7 @@ pyperclip
 pyautogui
 Pillow
 csv
+google-auth
+google-auth-oauthlib
+google-api-python-client
+pickle
