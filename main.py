@@ -26,7 +26,18 @@ def preparation():
 	drive.prompt_uploading_folder_link() # UPLOADING_FOLDER_ID
 
 def upload_and_link():
-	pass
+	for row in GUI_auto_screenshots.LEADLIST.csv_data:
+		loom_filepath = row[GUI_auto_screenshots.LOOM_FILEPATH_KEY]
+		uploaded_loom_name = ""
+		link = drive.upload_public_video(drive.SERVICE, loom_filepath, drive.UPLOADING_FOLDER_ID, uploaded_loom_name)
+		if link:
+			pass # works
+		else:
+			# none
+			pass
+		connect_lead_loom(link) # undeclared
+		GUI_auto_screenshots.LEADLIST.update_csv() # undeclared
+
 
 def autopilot():
 	# screens

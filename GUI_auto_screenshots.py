@@ -13,6 +13,7 @@ WEBPAGE_LOADING_TIME = "10" # int
 MODIFIER_KEY = str()
 LEADLIST = None
 SCREENSHOTS_DIR = str()
+LOOM_FILEPATH_KEY = "loom_filepath"
 
 LEADS_FILEPATH = str()
 
@@ -88,6 +89,17 @@ class Leadlist:
 			if VERBOSE: print("Found bad last line, removed it.")
 		if VERBOSE: print(f"{self.filepath} verified successfully.")
 		return self.csv_data
+
+	def update_csv(self):
+		if len(self.csv_data)==0:
+			if VERBOSE: print(f"update_csv: Empty lead list. Clearing {self.filepath}")
+			with open(self.filepath, 'w') as fd:
+				fd.write("\n")
+			return None
+		with open(self.filepath, 'w') as csvfile:
+			writer = csv.DictWriter(csvfile, fieldnames=self.csv_data[0].keys())
+			writer.writeheader()
+			writer.writerows(self.csv_data)
 
 
 def load_leadlist()->list[dict]:
@@ -184,15 +196,35 @@ def get_links(lead:dict):
 			links.append(f"https://www.google.com/search?q={urllib.parse.quote(lead[LEADLIST.name_key])}")
 	return links
 
-screenshot_saving_name = lambda lead : SCREENSHOTS_DIR + '/' + lead[LEADLIST.email_key] + ".png"
+def screenshot_saving_name(lead:dict)->str:
+	return SCREENSHOTS_DIR + '/' + lead[LEADLIST.email_key] + ".png"
+	# todo: avoid dupls.
+
+def connect_local_loom(lead:dict, loom_filepath:str)->None:
+	lead[LOOM_FILEPATH_KEY] = loom_filepath
+	LEADLIST.update_csv()
+
+def no_local_loom(lead):
+	lead[LOOM_FILEPATH_KEY] = ""
+	LEADLIST.update_csv()
 
 def screenshot_of_lead(lead:dict):
+	SCREENSHOT_SUCCESS = None
 	links = get_links(lead)
 	if VERBOSE: print(f"{len(links)} links for this lead ({lead[LEADLIST.website_key]})")
 	for link in links:
 		open_tab(link)
 	time.sleep(WEBPAGE_LOADING_TIME)
-	pyautogui.screenshot(screenshot_saving_name(lead))
+	loom_filepath = screenshot_saving_name(lead)
+	try:
+		pyautogui.screenshot(loom_filepath)
+		SCREENSHOT_SUCCESS = True
+	except Exception as e:
+		logging.error(f"Error while taking a screenshot: {e}")
+	if SCREENSHOT_SUCCESS:
+		connect_local_loom(lead, loom_filepath)
+	else:
+		no_local_loom(lead)
 	close_tabs(len(links))
 
 def shutdown_computer():
