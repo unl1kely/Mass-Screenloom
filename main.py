@@ -34,7 +34,7 @@ def connect_loom_link(lead:dict, link:str):
 	lead[LOOM_LINK_KEY] = link
 	GUI_auto_screenshots.LEADLIST.update_csv()
 
-def upload_and_link():
+def upload_and_link(shutdown):
 	UPLOADED_LOOMS_COUNT = 0
 	for lead in GUI_auto_screenshots.LEADLIST.csv_data:
 		loom_filepath = lead[GUI_auto_screenshots.LOOM_FILEPATH_KEY]
@@ -46,15 +46,16 @@ def upload_and_link():
 		else:
 			# upload failed
 			connect_loom_link(lead, "")
+	if shutdown:
+		GUI_auto_screenshots.shutdown_computer()
 
-
-def autopilot():
+def autopilot(testing=True):
 	# screens
 	GUI_auto_screenshots.launch_loop(shutdown=False)
 	# rendering
 	machine.launch()
 	# uploading
-	upload_and_link()
+	upload_and_link(not testing)
 
 def main():
 	preparation()
