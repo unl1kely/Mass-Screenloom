@@ -240,8 +240,7 @@ def shutdown_computer():
 	except subprocess.CalledProcessError as e:
 		print(f"Error occurred: {e}")
 
-
-def launch_loop(shutdown:bool):
+def init():
 	print("Loading lead list...")
 	load_leadlist()
 	print("Loading screenshots folder...")
@@ -251,6 +250,8 @@ def launch_loop(shutdown:bool):
 	detect_modifier_key()
 	#
 	prompt_wait_time()
+
+def launch_loop(shutdown:bool):
 	countdown()
 	# Assuming the browser is the active window.
 	i = 0

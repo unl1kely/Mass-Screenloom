@@ -13,9 +13,10 @@ from mask_generator import mask_generate
 COMPOSE_WITH_MOVIPY = False
 COMPOSE_WITH_FFMPEG = True
 VERBOSE = True
-TESTING = True
+TESTING = False
 
 # VARS
+MACHINE = None
 WEBCAM_VIDEO_PATH = str()
 OUTPUT_DIR = str()
 SCREENSHOTS_DIR = str()
@@ -156,10 +157,22 @@ def test():
     #machine.generate_loom(test_bg, 12)
     machine.launch()
 
-def main():
-    machine = Machine(SCREENSHOTS_DIR, WEBCAM_VIDEO_PATH, OUTPUT_DIR, OUTPUT_FILENAME_FORMAT)
-    machine.getDuration()
-    machine.launch()
+def init(screenshots_dir:str):
+    global MACHINE
+    prompt_webcam_file()
+    prompt_output_folder()
+    OUTPUT_FILENAME_FORMAT = "test_many_%.mp4"
+    MACHINE = Machine(
+        screenshots_dir,
+        WEBCAM_VIDEO_PATH,
+        OUTPUT_DIR,
+        OUTPUT_FILENAME_FORMAT
+    )
+    MACHINE.getDuration()
+
+def launch_loop():
+    MACHINE.launch()
 
 if __name__ == '__main__':
-    main()
+    init("screenshots")
+    launch_loop()

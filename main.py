@@ -3,35 +3,48 @@ import renderer
 import drive
 
 LOOM_LINK_KEY = "loom_link"
+TESTING = True
 
-def preparation():
-	# screenshots prep
-	GUI_auto_screenshots.load_leadlist()
-	GUI_auto_screenshots.prompt_screenshots_folder()
-	GUI_auto_screenshots.detect_modifier_key()
-	GUI_auto_screenshots.prompt_wait_time()
-	# render prep
-	# SCREENSHOTS_DIR, WEBCAM_VIDEO_PATH, OUTPUT_DIR, OUTPUT_FILENAME_FORMAT
-	renderer.SCREENSHOTS_DIR = GUI_auto_screenshots.prompt_screenshots_folder()
-	renderer.prompt_webcam_file() # WEBCAM_VIDEO_PATH
-	renderer.prompt_output_folder() # renderer.OUTPUT_DIR
-	# OUTPUT_FILENAME_FORMAT (already setup in renderer)
-	machine = renderer.Machine(
-		renderer.SCREENSHOTS_DIR,
-		renderer.WEBCAM_VIDEO_PATH,
-		renderer.OUTPUT_DIR,
-		renderer.OUTPUT_FILENAME_FORMAT
-	)
-	machine.getDuration()
-	# upload prep
-	drive.authenticate_oauth() # SERVICE auth google account & Mass Screenloom app
-	drive.prompt_uploading_folder_link() # UPLOADING_FOLDER_ID
+def init():
+	# screenshots init
+	GUI_auto_screenshots.init()
+	# render init
+	renderer.init(screenshots_dir=GUI_auto_screenshots.SCREENSHOTS_DIR)
+	# upload init
+	drive.init()
+
 
 def make_shared_loom_name(lead:dict)->str:
-	pass
+	email_domain = lambda email : email.split('@')[-1]
+	clear_whitespaces = lambda string : re.sub(r'\s+', '', string)
+	upload_name = str()
+	# last piece missing.
+	filename_pattern = "for %.mp4"
+	variables = [
+		lead[GUI_auto_screenshots.LEADLIST.name_key]
+		, email_domain(lead[GUI_auto_screenshots.LEADLIST.email_key])
+		, lead[GUI_auto_screenshots.LEADLIST.email_key]
+	]
+	for unique_idf in variables:
+		if clear_whitespaces(unique_idf):
+			upload_name = filename_pattern.replace('%', unique_idf)
+			return upload_name
+	if not upload_name:
+		raise Exception(f"No valid video name from list : {variables}")
+
+def loom_exists(lead:dict, link:str)->bool:
+	# 1. same-website leads duplicate detection logic.
+	# 2. loom link fusion in csv_data
+	return False # to-do later
 
 def connect_loom_link(lead:dict, link:str):
+	if loom_exists(lead=lead, link=link):
+		return None
 	lead[LOOM_LINK_KEY] = link
+	GUI_auto_screenshots.LEADLIST.update_csv()
+
+def empty_loom_link(lead:dict):
+	lead[LOOM_LINK_KEY] = ""
 	GUI_auto_screenshots.LEADLIST.update_csv()
 
 def upload_and_link(shutdown):
@@ -44,22 +57,22 @@ def upload_and_link(shutdown):
 			connect_loom_link(lead, link)
 			UPLOADED_LOOMS_COUNT += 1
 		else:
-			# upload failed
-			connect_loom_link(lead, "")
+			# upload failed. VERBOSE in local func.
+			empty_loom_link(lead)
 	if shutdown:
 		GUI_auto_screenshots.shutdown_computer()
 
-def autopilot(testing=True):
+def autopilot(testing:bool):
 	# screens
 	GUI_auto_screenshots.launch_loop(shutdown=False)
 	# rendering
-	machine.launch()
+	renderer.launch_loop()
 	# uploading
-	upload_and_link(not testing)
+	upload_and_link(shutdown = not testing)
 
 def main():
-	preparation()
-	autopilot()
+	init()
+	autopilot(TESTING)
 
 if __name__ == '__main__':
-	preparation()
+	init()

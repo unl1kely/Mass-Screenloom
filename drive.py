@@ -63,6 +63,7 @@ def authenticate_oauth()->googleapiclient.discovery.Resource|None:
         return SERVICE
     except Exception as e:
         logging.error(f"Error accessing Google Drive: {e}")
+        print(f"Error accessing Google Drive: {e}")
         return None
 
 # needs organization admin permission
@@ -82,6 +83,10 @@ def folder_id_from_link(link:str)->str|None:
     match = re.match(pattern, link)
     # Return the folder ID (the 4th capturing group)
     return match.group(4) if match else None
+
+def file_exists(service:googleapiclient.discovery.Resource, filename:str, folder_id:str)->bool:
+    #todo
+    pass
 
 def folder_exists(service:googleapiclient.discovery.Resource, folder_id:str)->bool:
     try:
@@ -106,7 +111,7 @@ def prompt_uploading_folder_link(): # UPLOADING_FOLDER_ID
 
 def upload_public_video(service:googleapiclient.discovery.Resource, video_filepath:str, folder_id:str, file_name:str)->str|None:
     """Upload a video file to Google Drive and return the shareable link."""
-    if VERBOSE: print(f"Uploading {file_name}")
+    if VERBOSE: print(f"Uploading {file_name} ...")
     try:
         # Create a media file upload object
         media = MediaFileUpload(video_filepath, mimetype='video/mp4')
@@ -133,9 +138,11 @@ def upload_public_video(service:googleapiclient.discovery.Resource, video_filepa
         # Create the shareable link
         shareable_link = f"https://drive.google.com/file/d/{file_id}/view?usp=sharing"
         logging.info(f"File uploaded successfully: {shareable_link}")
+        if VERBOSE: print(f"File uploaded successfully: {shareable_link}")
         return shareable_link
 
     except Exception as e:
+        print(f"Error uploading video: {e}")
         logging.error(f"Error uploading video: {e}")
         return None
 
@@ -146,15 +153,19 @@ def authenticate_and_upload(auth_function, filepath:str, folder_id:str, upload_n
         return upload_public_video(service, filepath, folder_id, upload_name)
     return None
 
+def init():
+    authenticate_oauth() # SERVICE auth google account & Mass Screenloom app
+    prompt_uploading_folder_link() # UPLOADING_FOLDER_ID
+
 def test()->None:
     video_filepath = "output/test_many_2.mp4"  # Local path to the video
     upload_name = "Test load pickle.mp4"  # Name of the file when uploaded
-    authenticate_oauth()
-    prompt_uploading_folder_link() # output : folder id
+    init()
     #link = authenticate_and_upload(authenticate_oauth, video_filepath, UPLOADING_FOLDER_ID, upload_name)
 
 def main():
-    test()
+    #test()
+    pass
 
 # Example usage
 if __name__ == "__main__":
