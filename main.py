@@ -1,6 +1,7 @@
 import GUI_auto_screenshots
 import renderer
 import drive
+import re
 
 LOOM_LINK_KEY = "loom_link"
 TESTING = True
