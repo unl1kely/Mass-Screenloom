@@ -173,15 +173,15 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# user
-screenshots/*.png
-screenshots/*.jpg
-screenshots/*.jpeg
-output/*
+# user cache
+screenshots/*
 input/*
+output/*
+# video files
 *.mp4
 *.webm
 *.mov
+# data
 creds.json
 credentials.json
 *.pickle
