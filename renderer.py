@@ -20,7 +20,7 @@ MACHINE = None
 WEBCAM_VIDEO_PATH = str()
 OUTPUT_DIR = str()
 SCREENSHOTS_DIR = str()
-OUTPUT_FILENAME_FORMAT = "test_many_%.mp4"
+OUTPUT_FILENAME_FORMAT = "test-au-%.mp4"
 
 if TESTING:
     SCREENSHOTS_DIR = "screenshots"
@@ -116,7 +116,7 @@ class Machine:
         command = self.generate_command(screenshot_filepath, output_mp4)
         if VERBOSE:
             print(screenshot_filepath+"...")
-            print(f"Command:\t{command}")
+            print(f"FFMPEG command running...")
         # Execute the command
         process = subprocess.run(command, shell=True, capture_output=True, text=True)
         # Check if the command was successful
@@ -176,3 +176,7 @@ def launch_loop():
 if __name__ == '__main__':
     init("screenshots")
     launch_loop()
+
+# todo
+# upload videos not screens
+# link videos with csv leads

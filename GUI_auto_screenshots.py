@@ -220,6 +220,7 @@ def screenshot_of_lead(lead:dict):
 		SCREENSHOT_SUCCESS = True
 	except Exception as e:
 		logging.error(f"Error while taking a screenshot: {e}")
+		print(f"Error while taking a screenshot: {e}")
 	if SCREENSHOT_SUCCESS:
 		connect_local_loom(lead, loom_filepath)
 	else:
@@ -258,7 +259,7 @@ def launch_loop(shutdown:bool):
 	#try:
 	if True:
 		for lead in LEADLIST.csv_data:
-			if VERBOSE: print(f"Processing lead n.{i+1} :\n{lead}\n")
+			if VERBOSE: print(f"Processing lead n.{i+1} :\n{lead[LEADLIST.email_key]}\n")
 			screenshot_of_lead(lead)
 			i += 1
 	#except Exception as e:

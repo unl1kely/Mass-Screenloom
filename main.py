@@ -51,6 +51,9 @@ def empty_loom_link(lead:dict):
 def upload_and_link(shutdown):
 	UPLOADED_LOOMS_COUNT = 0
 	for lead in GUI_auto_screenshots.LEADLIST.csv_data:
+		if lead.get(GUI_auto_screenshots.LOOM_FILEPATH_KEY)==None:
+			# only loop through leads with looms
+			continue
 		loom_filepath = lead[GUI_auto_screenshots.LOOM_FILEPATH_KEY]
 		shared_loom_name = make_shared_loom_name(lead)
 		link = drive.upload_public_video(drive.SERVICE, loom_filepath, drive.UPLOADING_FOLDER_ID, shared_loom_name)
