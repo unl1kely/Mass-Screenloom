@@ -158,7 +158,7 @@ class Machine:
         # Process each screenshot
         for i, lead in enumerate(self.LEADLIST.csv_data):
             screenshot_filepath = lead.get(SCREEN_FILEPATH_KEY)
-            if not (screenshot_filepath.lower().endswith(('.png', '.jpg', '.jpeg')) and os.path.isfile(screenshot_filepath)):
+            if screenshot_filepath==None or not (screenshot_filepath.lower().endswith(('.png', '.jpg', '.jpeg')) and os.path.isfile(screenshot_filepath)):
                 continue
             OPERATION_STATUS = self.generate_loom(
                 screenshot_filepath=screenshot_filepath,
