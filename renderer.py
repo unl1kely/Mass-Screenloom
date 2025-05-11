@@ -85,7 +85,7 @@ class Machine:
         return self.LEADLIST
 
     def leads_from_object(self, obj:Leadlist)->Leadlist:
-        if not isintance(obj, Leadlist):
+        if not isinstance(obj, Leadlist):
             raise TypeError(f"Expected an instance of Leadlist, but got {type(obj).__name__}.")
         self.LEADLIST = obj
         return self.LEADLIST
