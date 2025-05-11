@@ -165,6 +165,9 @@ def open_tab(url:str):
 	paste(url)
 	press_enter()
 
+def wait_page_loading_static():
+	time.sleep(WEBPAGE_LOADING_TIME)
+
 is_link = lambda string : string.startswith(('http://', 'https://', 'www.')) and '.' in string
 
 def check_link(link:str)->bool:
@@ -212,7 +215,7 @@ def screenshot_of_lead(lead:dict):
 	if VERBOSE: print(f"{len(links)} links for this lead ({lead[LEADLIST.website_key]})")
 	for link in links:
 		open_tab(link)
-	time.sleep(WEBPAGE_LOADING_TIME)
+	wait_page_loading_static()
 	screenshot_filepath = screenshot_saving_name(lead)
 	try:
 		pyautogui.screenshot(screenshot_filepath)
