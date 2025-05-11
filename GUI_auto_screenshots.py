@@ -13,8 +13,7 @@ WEBPAGE_LOADING_TIME = "10" # int
 MODIFIER_KEY = str()
 LEADLIST = None
 SCREENSHOTS_DIR = str()
-LOOM_FILEPATH_KEY = "loom_filepath"
-
+SCREEN_FILEPATH_KEY = "screen_filepath"
 LEADS_FILEPATH = str()
 
 guidelines = """Make sure your browser is already logged in to these platforms: Twitter/X, Facebook, LinkedIn.
@@ -200,12 +199,12 @@ def screenshot_saving_name(lead:dict)->str:
 	return SCREENSHOTS_DIR + '/' + lead[LEADLIST.email_key] + ".png"
 	# todo: avoid dupls.
 
-def connect_local_loom(lead:dict, loom_filepath:str)->None:
-	lead[LOOM_FILEPATH_KEY] = loom_filepath
+def connect_local_screenshot(lead:dict, screenshot_filepath:str)->None:
+	lead[SCREEN_FILEPATH_KEY] = screenshot_filepath
 	LEADLIST.update_csv()
 
-def no_local_loom(lead):
-	connect_local_loom(lead, "")
+def no_local_screenshot(lead:dict):
+	connect_local_screenshot(lead, "")
 
 def screenshot_of_lead(lead:dict):
 	SCREENSHOT_SUCCESS = None
@@ -214,17 +213,17 @@ def screenshot_of_lead(lead:dict):
 	for link in links:
 		open_tab(link)
 	time.sleep(WEBPAGE_LOADING_TIME)
-	loom_filepath = screenshot_saving_name(lead)
+	screenshot_filepath = screenshot_saving_name(lead)
 	try:
-		pyautogui.screenshot(loom_filepath)
+		pyautogui.screenshot(screenshot_filepath)
 		SCREENSHOT_SUCCESS = True
 	except Exception as e:
 		logging.error(f"Error while taking a screenshot: {e}")
 		print(f"Error while taking a screenshot: {e}")
 	if SCREENSHOT_SUCCESS:
-		connect_local_loom(lead, loom_filepath)
+		connect_local_screenshot(lead, screenshot_filepath)
 	else:
-		no_local_loom(lead)
+		no_local_screenshot(lead)
 	close_tabs(len(links))
 
 def shutdown_computer():

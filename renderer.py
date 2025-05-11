@@ -8,6 +8,7 @@ import sys
 import os
 
 from mask_generator import mask_generate
+from GUI_auto_screenshots import Leadlist, SCREEN_FILEPATH_KEY
 
 # Settings
 COMPOSE_WITH_MOVIPY = False
@@ -20,6 +21,7 @@ MACHINE = None
 WEBCAM_VIDEO_PATH = str()
 OUTPUT_DIR = str()
 SCREENSHOTS_DIR = str()
+LOOM_FILEPATH_KEY = "loom_filepath"
 OUTPUT_FILENAME_FORMAT = "test-au-%.mp4"
 
 if TESTING:
@@ -66,13 +68,27 @@ def prompt_screenshots_folder():
     while not SCREENSHOTS_DIR:
         SCREENSHOTS_DIR = filedialog.askdirectory(title="Select the screenshots folder...")
 
+
 class Machine:
-    def __init__(self, screenshots_dir, webcam_filename, output_dir, output_filename_format):
-        self.screenshots_dir = screenshots_dir
+    def __init__(self, webcam_filename, output_dir, output_filename_format):
         self.webcam_filename = webcam_filename
         self.output_filename_format = output_filename_format
         self.output_dir = output_dir
         self.duration = None
+        self.LEADLIST = None
+
+    def leads_from_file(self, filepath:str)->Leadlist:
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"The file '{filepath}' does not exist.")
+        self.LEADLIST = Leadlist(LEADS_FILEPATH)
+        self.LEADLIST.verify()
+        return self.LEADLIST
+
+    def leads_from_object(self, obj:Leadlist)->Leadlist:
+        if not isintance(obj, Leadlist):
+            raise TypeError(f"Expected an instance of Leadlist, but got {type(obj).__name__}.")
+        self.LEADLIST = obj
+        return self.LEADLIST
 
     def output_filename_function(self, video_number:int|str)->str:
         return self.output_dir + '/' + self.output_filename_format.replace('%', str(video_number))
@@ -87,12 +103,12 @@ class Machine:
         self.duration = float(json.loads(result.stdout)['format']['duration'])
         if VERBOSE: print(f"Loaded Webcam Duration : {self.duration}")
     
-    def generate_command(self, screenshot_filepath:str, output_mp4:str):
-        return f'ffmpeg -loop 1 -t {self.duration} -i {screenshot_filepath} -i {self.webcam_filename} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=W-w:H-h:shortest=1" -c:v libx264 -preset superfast -crf 26 -pix_fmt yuv420p {output_mp4}'
+    def generate_command(self, screenshot_filepath:str, output_filepath:str):
+        return f'ffmpeg -loop 1 -t {self.duration} -i {screenshot_filepath} -i {self.webcam_filename} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=W-w:H-h:shortest=1" -c:v libx264 -preset superfast -crf 26 -pix_fmt yuv420p {output_filepath}'
         # works bottom right (with gaps):
-        #return f'ffmpeg -loop 1 -t {self.duration} -i {screenshot_filepath} -i {self.webcam_filename} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=W-w-10:H-h-10:shortest=1" -c:v libx264 -preset superfast -crf 26 -pix_fmt yuv420p {output_mp4}'
+        #return f'ffmpeg -loop 1 -t {self.duration} -i {screenshot_filepath} -i {self.webcam_filename} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=W-w-10:H-h-10:shortest=1" -c:v libx264 -preset superfast -crf 26 -pix_fmt yuv420p {output_filepath}'
         # works bottom left (with gaps):
-        #return f'ffmpeg -loop 1 -t {self.duration} -i {screenshot_filepath} -i {self.webcam_filename} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=10:H-h-10:shortest=1" -c:v libx264 -preset superfast -crf 26 -pix_fmt yuv420p {output_mp4}'
+        #return f'ffmpeg -loop 1 -t {self.duration} -i {screenshot_filepath} -i {self.webcam_filename} -filter_complex "[1:v]scale=-1:300[cam];[0:v][cam]overlay=10:H-h-10:shortest=1" -c:v libx264 -preset superfast -crf 26 -pix_fmt yuv420p {output_filepath}'
     def generate_with_moviepy(self, screenshot_filepath, video_number:int):
         # Load webcam video (before)
         #webcam_clip = VideoFileClip(WEBCAM_VIDEO_PATH).resize(height=300)  # Resize to smaller thumbnail
@@ -111,24 +127,60 @@ class Machine:
                 #, bitrate="8000k"
             )
 
-    def generate_loom(self, screenshot_filepath:str, video_number:int):
-        output_mp4 = self.output_filename_function(video_number)
-        command = self.generate_command(screenshot_filepath, output_mp4)
+    def connect_local_loom(lead:dict, loom_filepath:str)->None:
+        lead[LOOM_FILEPATH_KEY] = loom_filepath
+        LEADLIST.update_csv()
+
+    def no_local_loom(lead:dict):
+        connect_local_loom(lead, "")
+
+    def generate_loom(self, screenshot_filepath:str, video_number:int)->int:
+        output_filepath = self.output_filename_function(video_number)
+        command = self.generate_command(screenshot_filepath, output_filepath)
         if VERBOSE:
             print(screenshot_filepath+"...")
             print(f"FFMPEG command running...")
         # Execute the command
         process = subprocess.run(command, shell=True, capture_output=True, text=True)
         # Check if the command was successful
-        if process.returncode == 0:
-            if VERBOSE: print(f'Successfully created {output_mp4}')
-            return 0
-        else:
-            print(f'Error creating {output_mp4}: {process.stderr}')
-            logging.error(f'Error creating {output_mp4}: {process.stderr}')
+        if process.returncode != 0:
+            print(f'Error creating {output_filepath}: {process.stderr}')
+            logging.error(f'Error creating {output_filepath}: {process.stderr}')
             return 1
+        # success
+        if VERBOSE: print(f'Successfully created {output_filepath}')
+        return 0
 
-    def launch(self):
+    def launch(self)->bool:
+        if self.LEADLIST==None:
+            raise ValueError("Machine.LEADLIST is required and must be loaded before Machine.launch()")
+        errors_count = 0
+        # Process each screenshot
+        for i, lead in enumerate(self.LEADLIST.csv_data):
+            screenshot_filepath = lead.get(SCREEN_FILEPATH_KEY)
+            if not (screenshot_filepath.lower().endswith(('.png', '.jpg', '.jpeg')) and os.path.isfile(screenshot_filepath)):
+                continue
+            OPERATION_STATUS = self.generate_loom(
+                screenshot_filepath=screenshot_filepath,
+                video_number=i+1
+            )
+            if OPERATION_STATUS==0: # SUCCESS
+                connect_local_loom(lead, output_filepath)
+                errors_count = 0
+            else:
+                no_local_loom(lead)
+                errors_count += 1
+
+            if errors_count >= 3:
+                print("Reached 3 consecutive failed looms. Aborting...")
+                logging.error("Reached 3 consecutive failed looms. Aborting...")
+                return False
+        return True
+
+    def setDir(self, screenshots_dir):
+        self.screenshots_dir = screenshots_dir
+
+    def launch_from_dir(self)->bool:
         errors_count = 0
         # Process each screenshot
         for i, screenshot_file in enumerate(sorted(os.listdir(self.screenshots_dir))):
@@ -152,18 +204,19 @@ class Machine:
 def test():
     prompt_webcam_file()
     prompt_output_folder()
-    machine = Machine(SCREENSHOTS_DIR, WEBCAM_VIDEO_PATH, OUTPUT_DIR, OUTPUT_FILENAME_FORMAT)
+    machine.setDir(SCREENSHOTS_DIR)
+    #machine = Machine(WEBCAM_VIDEO_PATH, OUTPUT_DIR, OUTPUT_FILENAME_FORMAT)
     machine.getDuration()
     #machine.generate_loom(test_bg, 12)
-    machine.launch()
+    machine.launch_from_dir()
 
-def init(screenshots_dir:str):
+def init():
     global MACHINE
     prompt_webcam_file()
     prompt_output_folder()
     OUTPUT_FILENAME_FORMAT = "test_many_%.mp4"
     MACHINE = Machine(
-        screenshots_dir,
+        # nodir
         WEBCAM_VIDEO_PATH,
         OUTPUT_DIR,
         OUTPUT_FILENAME_FORMAT
@@ -174,7 +227,7 @@ def launch_loop():
     MACHINE.launch()
 
 if __name__ == '__main__':
-    init("screenshots")
+    init()
     launch_loop()
 
 # todo

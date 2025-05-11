@@ -10,7 +10,7 @@ def init():
 	# screenshots init
 	GUI_auto_screenshots.init()
 	# render init
-	renderer.init(screenshots_dir=GUI_auto_screenshots.SCREENSHOTS_DIR)
+	renderer.init()
 	# upload init
 	drive.init()
 
@@ -22,9 +22,9 @@ def make_shared_loom_name(lead:dict)->str:
 	# last piece missing.
 	filename_pattern = "for %.mp4"
 	variables = [
-		lead[GUI_auto_screenshots.LEADLIST.name_key]
-		, email_domain(lead[GUI_auto_screenshots.LEADLIST.email_key])
-		, lead[GUI_auto_screenshots.LEADLIST.email_key]
+		lead[renderer.MACHINE.LEADLIST.name_key]
+		, email_domain(lead[renderer.MACHINE.LEADLIST.email_key])
+		, lead[renderer.MACHINE.LEADLIST.email_key]
 	]
 	for unique_idf in variables:
 		if clear_whitespaces(unique_idf):
@@ -42,19 +42,19 @@ def connect_loom_link(lead:dict, link:str):
 	if loom_exists(lead=lead, link=link):
 		return None
 	lead[LOOM_LINK_KEY] = link
-	GUI_auto_screenshots.LEADLIST.update_csv()
+	renderer.MACHINE.LEADLIST.update_csv()
 
 def empty_loom_link(lead:dict):
 	lead[LOOM_LINK_KEY] = ""
-	GUI_auto_screenshots.LEADLIST.update_csv()
+	renderer.MACHINE.LEADLIST.update_csv()
 
 def upload_and_link(shutdown):
 	UPLOADED_LOOMS_COUNT = 0
-	for lead in GUI_auto_screenshots.LEADLIST.csv_data:
-		if lead.get(GUI_auto_screenshots.LOOM_FILEPATH_KEY)==None:
+	for lead in renderer.MACHINE.LEADLIST.csv_data:
+		loom_filepath = lead.get(renderer.LOOM_FILEPATH_KEY)
+		if loom_filepath==None:
 			# only loop through leads with looms
 			continue
-		loom_filepath = lead[GUI_auto_screenshots.LOOM_FILEPATH_KEY]
 		shared_loom_name = make_shared_loom_name(lead)
 		link = drive.upload_public_video(drive.SERVICE, loom_filepath, drive.UPLOADING_FOLDER_ID, shared_loom_name)
 		if link:
@@ -70,6 +70,7 @@ def autopilot(testing:bool):
 	# screens
 	GUI_auto_screenshots.launch_loop(shutdown=False)
 	# rendering
+	MACHINE.leads_from_object(GUI_auto_screenshots.LEADLIST) # load LEADLIST
 	renderer.launch_loop()
 	# uploading
 	upload_and_link(shutdown = not testing)
