@@ -95,7 +95,7 @@ class Leadlist:
 			with open(self.filepath, 'w') as fd:
 				fd.write("\n")
 			return None
-		with open(self.filepath, 'w') as csvfile:
+		with open(self.filepath, 'w', newline='') as csvfile:
 			writer = csv.DictWriter(csvfile, fieldnames=self.csv_data[0].keys())
 			writer.writeheader()
 			writer.writerows(self.csv_data)

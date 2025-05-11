@@ -80,7 +80,7 @@ class Machine:
     def leads_from_file(self, filepath:str)->Leadlist:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"The file '{filepath}' does not exist.")
-        self.LEADLIST = Leadlist(LEADS_FILEPATH)
+        self.LEADLIST = Leadlist(filepath)
         self.LEADLIST.verify()
         return self.LEADLIST
 
@@ -129,7 +129,7 @@ class Machine:
 
     def connect_local_loom(lead:dict, loom_filepath:str)->None:
         lead[LOOM_FILEPATH_KEY] = loom_filepath
-        LEADLIST.update_csv()
+        self.LEADLIST.update_csv()
 
     def no_local_loom(lead:dict):
         connect_local_loom(lead, "")
@@ -202,19 +202,14 @@ class Machine:
 
 
 def test():
-    prompt_webcam_file()
-    prompt_output_folder()
-    machine.setDir(SCREENSHOTS_DIR)
-    #machine = Machine(WEBCAM_VIDEO_PATH, OUTPUT_DIR, OUTPUT_FILENAME_FORMAT)
-    machine.getDuration()
-    #machine.generate_loom(test_bg, 12)
-    machine.launch_from_dir()
+    init()
+    MACHINE.leads_from_file(filepath=input("Load from csv : "))
+    MACHINE.getDuration()
 
 def init():
     global MACHINE
     prompt_webcam_file()
     prompt_output_folder()
-    OUTPUT_FILENAME_FORMAT = "test_many_%.mp4"
     MACHINE = Machine(
         # nodir
         WEBCAM_VIDEO_PATH,
@@ -227,8 +222,7 @@ def launch_loop():
     MACHINE.launch()
 
 if __name__ == '__main__':
-    init()
-    launch_loop()
+    test()
 
 # todo
 # upload videos not screens
