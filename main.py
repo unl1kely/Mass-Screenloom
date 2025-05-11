@@ -70,7 +70,7 @@ def autopilot(testing:bool):
 	# screens
 	GUI_auto_screenshots.launch_loop(shutdown=False)
 	# rendering
-	MACHINE.leads_from_object(GUI_auto_screenshots.LEADLIST) # load LEADLIST
+	renderer.MACHINE.leads_from_object(GUI_auto_screenshots.LEADLIST) # load LEADLIST
 	renderer.launch_loop()
 	# uploading
 	upload_and_link(shutdown = not testing)
