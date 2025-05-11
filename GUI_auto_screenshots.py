@@ -218,7 +218,7 @@ def screenshot_of_lead(lead:dict):
 		pyautogui.screenshot(screenshot_filepath)
 		SCREENSHOT_SUCCESS = True
 	except Exception as e:
-		logging.error(f"Error while taking a screenshot: {e}")
+		# logging.error(f"Error while taking a screenshot: {e}") # no logging
 		print(f"Error while taking a screenshot: {e}")
 	if SCREENSHOT_SUCCESS:
 		connect_local_screenshot(lead, screenshot_filepath)

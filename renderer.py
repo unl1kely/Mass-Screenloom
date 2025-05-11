@@ -127,14 +127,15 @@ class Machine:
                 #, bitrate="8000k"
             )
 
-    def connect_local_loom(lead:dict, loom_filepath:str)->None:
+    def connect_local_loom(self, lead:dict, loom_filepath:str)->None:
         lead[LOOM_FILEPATH_KEY] = loom_filepath
         self.LEADLIST.update_csv()
 
-    def no_local_loom(lead:dict):
-        connect_local_loom(lead, "")
+    def no_local_loom(self, lead:dict):
+        self.connect_local_loom(lead, "")
 
-    def generate_loom(self, screenshot_filepath:str, video_number:int)->int:
+    def generate_loom(self, screenshot_filepath:str, video_number:int)->str|None:
+        # return output_filepath if success
         output_filepath = self.output_filename_function(video_number)
         command = self.generate_command(screenshot_filepath, output_filepath)
         if VERBOSE:
@@ -146,10 +147,10 @@ class Machine:
         if process.returncode != 0:
             print(f'Error creating {output_filepath}: {process.stderr}')
             logging.error(f'Error creating {output_filepath}: {process.stderr}')
-            return 1
+            return None
         # success
         if VERBOSE: print(f'Successfully created {output_filepath}')
-        return 0
+        return output_filepath
 
     def launch(self)->bool:
         if self.LEADLIST==None:
@@ -160,15 +161,15 @@ class Machine:
             screenshot_filepath = lead.get(SCREEN_FILEPATH_KEY)
             if screenshot_filepath==None or not (screenshot_filepath.lower().endswith(('.png', '.jpg', '.jpeg')) and os.path.isfile(screenshot_filepath)):
                 continue
-            OPERATION_STATUS = self.generate_loom(
+            output_filepath = self.generate_loom(
                 screenshot_filepath=screenshot_filepath,
                 video_number=i+1
             )
-            if OPERATION_STATUS==0: # SUCCESS
-                connect_local_loom(lead, output_filepath)
+            if output_filepath: # SUCCESS
+                self.connect_local_loom(lead, output_filepath)
                 errors_count = 0
             else:
-                no_local_loom(lead)
+                self.no_local_loom(lead)
                 errors_count += 1
 
             if errors_count >= 3:
@@ -188,11 +189,12 @@ class Machine:
                 continue
             screenshot_filepath = os.path.join(self.screenshots_dir, screenshot_file)
 
-            OPERATION_STATUS = self.generate_loom(
+            output_filepath = self.generate_loom(
                 screenshot_filepath=screenshot_filepath,
                 video_number=i+1
             )
-            errors_count = 0 if OPERATION_STATUS == 0 else errors_count + 1
+            # no connect
+            errors_count = 0 if output_filepath != None else errors_count + 1
 
             if errors_count >= 3:
                 print("Reached 3 consecutive failed looms. Aborting...")
