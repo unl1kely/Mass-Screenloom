@@ -186,7 +186,9 @@ def check_link(link:str)->bool:
 
 def get_links(lead:dict):
 	links = [v for k, v in lead.items() if k != LEADLIST.website_key and check_link(v)]
-	popped_facebook = [links.pop(i) for i in range(len(links)) if "facebook.com/" in links[i]]
+	# popped_facebook = [links.pop(i) for i in range(len(links)) if "facebook.com/" in links[i]]
+	popped_facebook = [link for link in links if "facebook.com/" in link]
+	links = [link for link in links if "facebook.com/" not in link]
 	website = lead[LEADLIST.website_key]
 	if check_link(website):
 		links.append(website) # add last to show
