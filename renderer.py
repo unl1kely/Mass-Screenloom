@@ -68,6 +68,27 @@ def prompt_screenshots_folder():
     while not SCREENSHOTS_DIR:
         SCREENSHOTS_DIR = filedialog.askdirectory(title="Select the screenshots folder...")
 
+def extract_thumbnail(video_path:str, thumbnail_path:str, time:int=1)->str|None:
+    """Extract a thumbnail from a video at a specified time (in seconds) using FFmpeg."""
+    if not thumbnail_path.endswith(('.jpg', '.jpeg')):
+        thumbnail_path = thumbnail_path + ".jpg"
+    command = [
+        'ffmpeg',
+        '-ss', str(time),  # Seek to the specified time
+        '-i', video_path,  # Input video file
+        '-vframes', '1',   # Output one frame
+        thumbnail_path # Output thumbnail file as JPEG
+    ]
+    process = subprocess.run(command, capture_output=True, text=True)
+    # Check if the command was successful
+    if process.returncode != 0:
+        print("Error:", process.stderr)  # Print the error message
+        return None
+    else:
+        if VERBOSE: print("Thumbnail extracted successfully.")
+        return thumbnail_path
+
+
 
 class Machine:
     def __init__(self, webcam_filename, output_dir, output_filename_format):

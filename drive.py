@@ -136,7 +136,7 @@ def upload_public_video(service:googleapiclient.discovery.Resource, video_filepa
         ).execute()
 
         # Create the shareable link
-        shareable_link = f"https://drive.google.com/file/d/{file_id}/view?usp=sharing"
+        shareable_link = f"https://drive.google.com/file/d/{file_id}/preview"
         logging.info(f"File uploaded successfully: {shareable_link}")
         if VERBOSE: print(f"File uploaded successfully: {shareable_link}")
         return shareable_link
