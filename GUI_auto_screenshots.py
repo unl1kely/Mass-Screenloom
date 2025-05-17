@@ -174,7 +174,7 @@ def check_link(link:str)->bool:
 	if not is_link(link):
 		return False
 	try:
-		response = requests.head(link, allow_redirects=True, timeout=WEBPAGE_LOADING_TIME)  # Use HEAD to check the link
+		response = requests.head(link, allow_redirects=True, timeout=5)  # Use HEAD to check the link
 		# Check if the status code starts with 2
 		if str(response.status_code).startswith('2'):
 			return True

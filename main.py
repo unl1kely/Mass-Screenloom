@@ -6,13 +6,16 @@ import re
 LOOM_LINK_KEY = "loom_link"
 TESTING = True
 
-def init():
-	# screenshots init
-	GUI_auto_screenshots.init()
-	# render init
-	renderer.init()
-	# upload init
-	drive.init()
+def init(g=True, r=True, d=True):
+	if g:
+		# screenshots init
+		GUI_auto_screenshots.init()
+	if r:
+		# render init
+		renderer.init()
+	if d:
+		# upload init
+		drive.init()
 
 
 def make_shared_loom_name(lead:dict)->str:
@@ -48,9 +51,15 @@ def empty_loom_link(lead:dict):
 	lead[LOOM_LINK_KEY] = ""
 	renderer.MACHINE.LEADLIST.update_csv()
 
-def upload_and_link(shutdown):
+def upload_and_link(shutdown, skipUploadedLeads):
 	UPLOADED_LOOMS_COUNT = 0
-	for lead in renderer.MACHINE.LEADLIST.csv_data:
+	treatable_indexes = range(len(renderer.MACHINE.LEADLIST.csv_data))
+	if skipUploadedLeads:
+		no_loom_indexes = [i for i in range(len(renderer.MACHINE.LEADLIST.csv_data)) if not renderer.MACHINE.LEADLIST.csv_data[i].get(LOOM_LINK_KEY)]
+		treatable_indexes = no_loom_indexes
+	#for lead in renderer.MACHINE.LEADLIST.csv_data:
+	for lead_index in treatable_indexes:
+		lead = renderer.MACHINE.LEADLIST.csv_data[lead_index]
 		loom_filepath = lead.get(renderer.LOOM_FILEPATH_KEY)
 		if loom_filepath==None:
 			# only loop through leads with looms
@@ -66,18 +75,43 @@ def upload_and_link(shutdown):
 	if shutdown:
 		GUI_auto_screenshots.shutdown_computer()
 
-def autopilot(testing:bool):
+def autopilot(testing:bool, shutdown:bool, skipUploadedLeads):
 	# screens
 	GUI_auto_screenshots.launch_loop(shutdown=False)
 	# rendering
 	renderer.MACHINE.leads_from_object(GUI_auto_screenshots.LEADLIST) # load LEADLIST
 	renderer.launch_loop()
 	# uploading
-	upload_and_link(shutdown = not testing)
+	upload_and_link(shutdown = shutdown, skipUploadedLeads=skipUploadedLeads)
+
+# Corrective functions
+def render_and_upload_list(screened_list_filepath:str, shutdown:bool, skipUploadedLeads:bool):
+	init(0,1,1)
+	# rendering
+	renderer.MACHINE.leads_from_file(screened_list_filepath) # load LEADLIST
+	renderer.launch_loop()
+	# uploading
+	upload_and_link(shutdown = shutdown, skipUploadedLeads=skipUploadedLeads)
+
+def upload_rendered_list(rendered_list_filepath:str, shutdown:bool, skipUploadedLeads:bool):
+	init(0,1,1)
+	# load list
+	renderer.MACHINE.leads_from_file(rendered_list_filepath) # load LEADLIST
+	# uploading
+	upload_and_link(shutdown = shutdown, skipUploadedLeads=skipUploadedLeads)
+
+def retry_upload(rendered_list_filepath:str, shutdown:bool, initialised_list:bool):
+	if not initialised_list:
+		init(0,1,1)
+		# load list
+		renderer.MACHINE.leads_from_file(rendered_list_filepath) # load LEADLIST
+	# uploading
+	upload_and_link(shutdown = shutdown, skipUploadedLeads=True)
 
 def main():
 	init()
-	autopilot(TESTING)
+	autopilot(TESTING, shutdown=False, skipUploadedLeads=True )
+
 
 if __name__ == '__main__':
 	main()

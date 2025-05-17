@@ -1,6 +1,7 @@
 from moviepy.editor import VideoFileClip, ImageClip, CompositeVideoClip
 from make_webcam_component import *
 from tkinter import filedialog
+from datetime import datetime
 import subprocess
 import logging
 import json
@@ -22,7 +23,10 @@ WEBCAM_VIDEO_PATH = str()
 OUTPUT_DIR = str()
 SCREENSHOTS_DIR = str()
 LOOM_FILEPATH_KEY = "loom_filepath"
-OUTPUT_FILENAME_FORMAT = "test-au-%.mp4"
+
+now = datetime.now()
+formatted_date = now.strftime("%y.%m.%d")
+OUTPUT_FILENAME_FORMAT = formatted_date+"_loom_%.mp4"
 
 if TESTING:
     SCREENSHOTS_DIR = "screenshots"
@@ -112,7 +116,10 @@ class Machine:
         return self.LEADLIST
 
     def output_filename_function(self, video_number:int|str)->str:
-        return self.output_dir + '/' + self.output_filename_format.replace('%', str(video_number))
+        # hour minute second for uniqueness. needs to change if rendering videos in parallel.
+        time_now = datetime.now().strftime("h%H.%M.%S")
+        return self.output_dir + '/' + self.output_filename_format.replace('%', time_now)
+        #return self.output_dir + '/' + self.output_filename_format.replace('%', str(video_number))
     
     def getDuration(self):
         result = subprocess.run(
@@ -160,7 +167,8 @@ class Machine:
         output_filepath = self.output_filename_function(video_number)
         command = self.generate_command(screenshot_filepath, output_filepath)
         if VERBOSE:
-            print(screenshot_filepath+"...")
+            screenshot_basename = os.path.basename(screenshot_filepath)
+            print(screenshot_basename+" ...")
             print(f"FFMPEG command running...")
         # Execute the command
         process = subprocess.run(command, shell=True, capture_output=True, text=True)
@@ -170,7 +178,9 @@ class Machine:
             logging.error(f'Error creating {output_filepath}: {process.stderr}')
             return None
         # success
-        if VERBOSE: print(f'Successfully created {output_filepath}')
+        if VERBOSE:
+            output_basename = os.path.basename(output_filepath)
+            print(f'Successfully created {output_basename}')
         return output_filepath
 
     def launch(self)->bool:
@@ -246,7 +256,3 @@ def launch_loop():
 
 if __name__ == '__main__':
     test()
-
-# todo
-# upload videos not screens
-# link videos with csv leads

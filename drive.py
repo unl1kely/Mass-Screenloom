@@ -111,7 +111,7 @@ def prompt_uploading_folder_link(): # UPLOADING_FOLDER_ID
 
 def upload_public_video(service:googleapiclient.discovery.Resource, video_filepath:str, folder_id:str, file_name:str)->str|None:
     """Upload a video file to Google Drive and return the shareable link."""
-    if VERBOSE: print(f"Uploading {file_name} ...")
+    if VERBOSE: print(f"Uploading '{file_name}' ...")
     try:
         # Create a media file upload object
         media = MediaFileUpload(video_filepath, mimetype='video/mp4')
