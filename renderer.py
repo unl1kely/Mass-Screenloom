@@ -189,12 +189,18 @@ class Machine:
             print(f'Successfully created {output_basename}')
         return output_filepath
 
-    def launch(self)->bool:
+    def launch(self, skipRenderedLeads=True)->bool:
         if self.LEADLIST==None:
             raise ValueError("Machine.LEADLIST is required and must be loaded before Machine.launch()")
         errors_count = 0
         # Process each screenshot
-        for i, lead in enumerate(self.LEADLIST.csv_data):
+        treatable_indexes = range(len(self.LEADLIST.csv_data))
+        if skipRenderedLeads:
+            not_rendered_indexes = [i for i in range(len(self.LEADLIST.csv_data)) if not self.LEADLIST.csv_data[i].get(LOOM_FILEPATH_KEY)]
+            treatable_indexes = not_rendered_indexes
+        #for i, lead in enumerate(self.LEADLIST.csv_data):
+        for i in treatable_indexes:
+            lead = self.LEADLIST.csv_data[i]
             screenshot_filepath = lead.get(SCREEN_FILEPATH_KEY)
             if screenshot_filepath==None or not (screenshot_filepath.lower().endswith(('.png', '.jpg', '.jpeg')) and os.path.isfile(screenshot_filepath)):
                 continue
@@ -210,8 +216,8 @@ class Machine:
                 errors_count += 1
 
             if errors_count >= 3:
-                print("Reached 3 consecutive failed looms. Aborting...")
-                logging.error("Reached 3 consecutive failed looms. Aborting...")
+                print("Reached 3 consecutive failed renders. Aborting...")
+                logging.error("Reached 3 consecutive failed renders. Aborting...")
                 return False
         return True
 
