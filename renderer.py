@@ -95,12 +95,18 @@ def extract_thumbnail(video_path:str, thumbnail_path:str, time:int=1)->str|None:
 
 
 class Machine:
-    def __init__(self, webcam_filename, output_dir, output_filename_format):
+    def __init__(self, webcam_filename, output_dir, output_filename_format, leads_from_file=None, leads_from_object=None):
+        if leads_from_file and not leads_from_object:
+            self.leads_from_file(leads_from_file)
+        elif leads_from_object and not leads_from_file:
+            self.leads_from_object(leads_from_object)
+        elif leads_from_object and leads_from_file:
+            raise ValueError("Either pass 'leads_from_file' or 'leads_from_object' but not both.")
         self.webcam_filename = webcam_filename
         self.output_filename_format = output_filename_format
         self.output_dir = output_dir
-        self.duration = None
         self.LEADLIST = None
+        self.setDuration()
 
     def leads_from_file(self, filepath:str)->Leadlist:
         if not os.path.exists(filepath):
@@ -121,7 +127,7 @@ class Machine:
         return self.output_dir + '/' + self.output_filename_format.replace('%', time_now)
         #return self.output_dir + '/' + self.output_filename_format.replace('%', str(video_number))
     
-    def getDuration(self):
+    def setDuration(self):
         result = subprocess.run(
             ['ffprobe', '-v', 'error', '-show_entries',
              'format=duration', '-of', 'json', self.webcam_filename],
@@ -237,7 +243,6 @@ class Machine:
 def test():
     init()
     MACHINE.leads_from_file(filepath=input("Load from csv : "))
-    MACHINE.getDuration()
 
 def init():
     global MACHINE
@@ -249,7 +254,6 @@ def init():
         OUTPUT_DIR,
         OUTPUT_FILENAME_FORMAT
     )
-    MACHINE.getDuration()
 
 def launch_loop():
     MACHINE.launch()
