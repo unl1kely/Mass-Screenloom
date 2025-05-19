@@ -133,7 +133,7 @@ def prompt_screenshots_folder():
 		SCREENSHOTS_DIR = filedialog.askdirectory(title="Select where to save the screenshots...")
 
 # Countdown timer to give the user time to select the browser
-def countdown(seconds=5):
+def countdown(seconds=10):
 	for i in range(seconds, 0, -1):
 		print(f"Switch to your browser. The script will run in {i} seconds...", end='\r')
 		time.sleep(1)
