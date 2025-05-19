@@ -1,6 +1,7 @@
 import GUI_auto_screenshots
 import renderer
 import drive
+import sys
 import re
 
 LOOM_LINK_KEY = "loom_link"
@@ -54,6 +55,7 @@ def empty_loom_link(lead:dict):
 def upload_and_link(shutdown:bool, skipUploadedLeads:bool=True, retry:bool=True):
 	UPLOADED_LOOMS_COUNT = 0
 	treatable_indexes = range(len(renderer.MACHINE.LEADLIST.csv_data))
+	fails = 0
 	if skipUploadedLeads:
 		no_loom_indexes = [i for i in range(len(renderer.MACHINE.LEADLIST.csv_data)) if not renderer.MACHINE.LEADLIST.csv_data[i].get(LOOM_LINK_KEY)]
 		treatable_indexes = no_loom_indexes
@@ -72,8 +74,13 @@ def upload_and_link(shutdown:bool, skipUploadedLeads:bool=True, retry:bool=True)
 		else:
 			# upload failed. VERBOSE in local func.
 			empty_loom_link(lead)
+			fails += 1
 	if retry:
-		upload_and_link(shutdown=False, skipUploadedLeads=True, retry=False)
+		if fails:
+			print("No fails, ignoring retry=True.")
+		else:
+			print(f"Retrying {fails} failed uploads...")
+			upload_and_link(shutdown=False, skipUploadedLeads=True, retry=False)
 	if shutdown:
 		GUI_auto_screenshots.shutdown_computer()
 
@@ -110,10 +117,9 @@ def retry_upload(rendered_list_filepath:str, shutdown:bool, initialised_list:boo
 	# uploading
 	upload_and_link(shutdown = shutdown, skipUploadedLeads=True, retry=False)
 
-def main():
+def main(shutdown:bool):
 	init()
-	autopilot(shutdown=False, skipUploadedLeads=True)
-
+	autopilot(shutdown=shutdown, skipUploadedLeads=True)
 
 if __name__ == '__main__':
-	main()
+	main(shutdown=False)
