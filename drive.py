@@ -42,7 +42,7 @@ def authenticate_oauth()->googleapiclient.discovery.Resource|None:
             try:
                 creds.refresh(Request())
                 creds_success = True
-            except:
+            except Exception as e:
                 logging.error(f"Error refreshing credentials: {e}\nTrying browser authentication...")
         if not creds_success:
             # browser login
