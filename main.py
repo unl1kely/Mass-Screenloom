@@ -77,10 +77,10 @@ def upload_and_link(shutdown:bool, skipUploadedLeads:bool=True, retry:bool=True)
 			fails += 1
 	if retry:
 		if fails:
-			print("No fails, ignoring retry=True.")
-		else:
 			print(f"Retrying {fails} failed uploads...")
 			upload_and_link(shutdown=False, skipUploadedLeads=True, retry=False)
+		else:
+			print("No fails, ignoring retry=True.")
 	if shutdown:
 		GUI_auto_screenshots.shutdown_computer()
 
