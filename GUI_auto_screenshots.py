@@ -164,6 +164,9 @@ def paste(text:str):
 def press_enter():
 	pyautogui.press('enter')
 
+def press_escape():
+	pyautogui.press('esc')
+
 def open_tab(url:str):
 	blank_tab()
 	select_URL_Bar()
@@ -235,6 +238,7 @@ def screenshot_of_lead(lead:dict):
 	for link in links:
 		open_tab(link)
 	wait_page_loading_static()
+	press_escape() # to cancel save_as window if it's a download link
 	screenshot_filepath = screenshot_saving_name(lead)
 	try:
 		pyautogui.screenshot(screenshot_filepath)
