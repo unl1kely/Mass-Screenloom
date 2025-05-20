@@ -38,6 +38,7 @@ class Leadlist:
 			self.csv_data = [line for line in csvFile]
 
 	def getShortestKey(self, keyword):
+		keyword = keyword.lower()
 		filtered_keys = [key for key in self.csv_data[0].keys() if keyword in key.lower()]
 		if filtered_keys:
 			# Return the key with the lowest number of characters
@@ -59,7 +60,11 @@ class Leadlist:
 		else:
 			self.website_key = self.getShortestKey("website")
 			self.email_key = self.getShortestKey("email")
-			self.name_key = self.getShortestKey("company name")
+			try:
+				self.name_key = self.getShortestKey("companyname")
+			except IndexError as ie:
+				self.name_key = self.getShortestKey("company name")
+			self.linkedin_key = self.getShortestKey("linkedin")
 		# PROHIBITED_COLUMNS
 		if any(column_name in self.columns_upper for column_name in PROHIBITED_COLUMNS):
 			print("Prohibited column detected. Aborting...")
@@ -185,16 +190,28 @@ def check_link(link:str)->bool:
 		return None
 
 def get_links(lead:dict):
-	links = [v for k, v in lead.items() if k != LEADLIST.website_key and check_link(v)]
+	facebook = None
+	all_links = [(k,val) for k, val in lead.items() if is_link(val)]
+	links = [url for k, url in all_links if k != LEADLIST.website_key and k != LEADLIST.linkedin_key and check_link(url)]
+	#links = [url for k, url in all_links if k != "website" and k != "linkedIn" and check_link(url)]
 	# popped_facebook = [links.pop(i) for i in range(len(links)) if "facebook.com/" in links[i]]
-	popped_facebook = [link for link in links if "facebook.com/" in link]
-	links = [link for link in links if "facebook.com/" not in link]
-	website = lead[LEADLIST.website_key]
+	
+	# get facebook
+	for i in range(len(links)):
+		if "facebook.com/" in links[i]:
+			facebook = links.pop(i)
+			break
+	# get website
+	website = lead.get(LEADLIST.website_key)
 	if check_link(website):
 		links.append(website) # add last to show
-	elif len(links)==0:	# no links besides fb
-		if popped_facebook:
-			links.append(popped_facebook[0])
+	# get linkedin
+	linkedin = lead.get(LEADLIST.linkedin_key)
+	if linkedin:
+		links.append(linkedin) # add last to show
+	elif len(links)==0:	# still 0 links besides fb
+		if facebook:
+			links.append(facebook)
 		else: # no website no fb no links
 			# must have something to show. Company Name
 			links.append(f"https://www.google.com/search?q={urllib.parse.quote(lead[LEADLIST.name_key])}")
@@ -214,7 +231,7 @@ def no_local_screenshot(lead:dict):
 def screenshot_of_lead(lead:dict):
 	SCREENSHOT_SUCCESS = None
 	links = get_links(lead)
-	if VERBOSE: print(f"{len(links)} links for this lead ({lead[LEADLIST.website_key]})")
+	if VERBOSE: print(f"{len(links)} links for this lead ({lead[LEADLIST.email_key]})")
 	for link in links:
 		open_tab(link)
 	wait_page_loading_static()
