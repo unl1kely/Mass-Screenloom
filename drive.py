@@ -180,6 +180,21 @@ def remove_file(service:googleapiclient.discovery.Resource, file_id:str)->bool:
         print(f"An error occurred: {e}")
         return False
 
+def mass_remove_files(service:googleapiclient.discovery.Resource, ids_list:list)->list:
+    VERBOSE = False
+    fails = 0
+    fail_ids = []
+    for i in range(len(ids_list)):
+        if remove_file(service, ids_list[i]):
+            print(f"{i},,{ids_list[i]}")
+        else:
+            fails += 1
+            fail_ids.append(ids_list[i])
+    if fails:
+        print("fails:"+str(fails))
+        print("failed_ids:"+str(fail_ids))
+    return fail_ids
+
 
 def authenticate_and_upload(auth_function, filepath:str, folder_id:str, upload_name:str)->str|None:
     # Main function to upload a video and return the shareable link.
