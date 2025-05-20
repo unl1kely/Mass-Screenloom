@@ -84,6 +84,31 @@ def folder_id_from_link(link:str)->str|None:
     # Return the folder ID (the 4th capturing group)
     return match.group(4) if match else None
 
+import re
+
+def file_id_from_link(link: str) -> str | None:
+    """
+    Supported formats include:
+    - https://drive.google.com/file/d/<id>/view
+    - https://drive.google.com/file/d/<id>/preview
+    - https://drive.google.com/open?id=<id>
+    - https://drive.google.com/uc?id=<id>
+    - https://drive.google.com/drive/folders/<id>
+    - URLs containing /u/0/, /u/1/, etc.
+    """
+    patterns = [
+        r"drive\.google\.com(?:/u/\d+)?/file/d/([a-zA-Z0-9_-]+)",       # /file/d/<id>
+        r"drive\.google\.com(?:/u/\d+)?/open\?id=([a-zA-Z0-9_-]+)",     # /open?id=<id>
+        r"drive\.google\.com(?:/u/\d+)?/uc\?id=([a-zA-Z0-9_-]+)",       # /uc?id=<id>
+        r"drive\.google\.com(?:/u/\d+)?/drive/folders/([a-zA-Z0-9_-]+)" # /drive/folders/<id>
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, link)
+        if match:
+            return match.group(1)
+    return None
+
+
 def file_exists(service:googleapiclient.discovery.Resource, filename:str, folder_id:str)->bool:
     #todo
     pass
@@ -145,6 +170,16 @@ def upload_public_video(service:googleapiclient.discovery.Resource, video_filepa
         print(f"Error uploading video: {e}")
         logging.error(f"Error uploading video: {e}")
         return None
+
+def remove_file(service:googleapiclient.discovery.Resource, file_id:str)->bool:
+    try:
+        service.files().delete(fileId=file_id).execute()
+        if VERBOSE: print(f"File {file_id} deleted successfully.")
+        return True
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False
+
 
 def authenticate_and_upload(auth_function, filepath:str, folder_id:str, upload_name:str)->str|None:
     # Main function to upload a video and return the shareable link.
