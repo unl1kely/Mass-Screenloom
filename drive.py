@@ -84,8 +84,6 @@ def folder_id_from_link(link:str)->str|None:
     # Return the folder ID (the 4th capturing group)
     return match.group(4) if match else None
 
-import re
-
 def file_id_from_link(link: str) -> str | None:
     """
     Supported formats include:
@@ -180,6 +178,11 @@ def remove_file(service:googleapiclient.discovery.Resource, file_id:str)->bool:
         print(f"An error occurred: {e}")
         return False
 
+def mass_remove_files_from_links(service:googleapiclient.discovery.Resource, files_links:list)->list:
+    ids_list = [file_id_from_link(link) for link in files_links]
+    valid_ids_list = [file_id for file_id in ids_list if file_id]
+    return mass_remove_files(service=service, ids_list=valid_ids_list)
+
 def mass_remove_files(service:googleapiclient.discovery.Resource, ids_list:list)->list:
     VERBOSE = False
     fails = 0
@@ -191,8 +194,8 @@ def mass_remove_files(service:googleapiclient.discovery.Resource, ids_list:list)
             fails += 1
             fail_ids.append(ids_list[i])
     if fails:
-        print("fails:"+str(fails))
-        print("failed_ids:"+str(fail_ids))
+        print("Number of failed Google Drive file removals:"+str(fails))
+        print(f"Couldn't remove the Drive videos with these ids: {fail_ids}")
     return fail_ids
 
 
