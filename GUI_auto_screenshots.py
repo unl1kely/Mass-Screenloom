@@ -8,6 +8,8 @@ import platform
 import time
 import csv
 
+SCREENSHOT_EXTENSION = ".png"
+
 VERBOSE = True
 WEBPAGE_LOADING_TIME = "10" # int
 MODIFIER_KEY = str()
@@ -221,7 +223,7 @@ def get_links(lead:dict):
 	return links
 
 def screenshot_saving_name(lead:dict)->str:
-	return SCREENSHOTS_DIR + '/' + lead[LEADLIST.email_key] + ".png"
+	return SCREENSHOTS_DIR + '/' + lead[LEADLIST.email_key] + SCREENSHOT_EXTENSION
 	# todo: avoid dupls.
 
 def connect_local_screenshot(lead:dict, screenshot_filepath:str)->None:
