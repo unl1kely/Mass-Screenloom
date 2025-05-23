@@ -20,8 +20,8 @@ TESTING = False
 # VARS
 MACHINE = None
 WEBCAM_VIDEO_PATH = str()
-OUTPUT_DIR = str()
-SCREENSHOTS_DIR = str()
+OUTPUT_DIR = str() # just for init
+SCREENSHOTS_DIR = str() # practically useless
 LOOM_FILEPATH_KEY = "loom_filepath"
 
 now = datetime.now()
@@ -42,6 +42,11 @@ logging.basicConfig(
 
 # Paths
 
+def set_webcam_file(filepath:str):
+    global WEBCAM_VIDEO_PATH
+    if os.path.isfile(filepath):
+        WEBCAM_VIDEO_PATH = filepath
+
 def prompt_webcam_file():
     global WEBCAM_VIDEO_PATH
     while not bool(WEBCAM_VIDEO_PATH):
@@ -61,6 +66,13 @@ def prompt_webcam_file():
                     ]
         )
     if VERBOSE: print("Selected webcam video :", WEBCAM_VIDEO_PATH)
+
+def set_output_dir(dirpath:str):
+    global OUTPUT_DIR
+    if os.path.isdir(dirpath):
+        OUTPUT_DIR = dirpath
+    else:
+        os.makedirs(dirpath)
 
 def prompt_output_folder():
     global OUTPUT_DIR
@@ -121,10 +133,11 @@ class Machine:
         self.LEADLIST = obj
         return self.LEADLIST
 
-    def output_filename_function(self, video_number:int|str)->str:
+    def output_filename_function(self, naming_arg:str)->str:
+        return os.path.join(self.output_dir, str(naming_arg) + ".mp4")
         # hour minute second for uniqueness. needs to change if rendering videos in parallel.
-        time_now = datetime.now().strftime("h%H.%M.%S")
-        return self.output_dir + '/' + self.output_filename_format.replace('%', time_now)
+        # time_now = datetime.now().strftime("h%H.%M.%S")
+        # return os.path.join(self.output_dir, self.output_filename_format.replace('%', time_now))
         #return self.output_dir + '/' + self.output_filename_format.replace('%', str(video_number))
     
     def setDuration(self):
@@ -156,7 +169,7 @@ class Machine:
                 screenshot_clip,
                 webcam_clip.set_position(("left", "bottom"))])
             if VERBOSE: print("composed.")
-            output_path = os.path.join(OUTPUT_DIR, self.output_filename_function(video_number))
+            output_path = os.path.join(self.output_dir, self.output_filename_function(video_number))
             composite.write_videofile(output_path, codec="mpeg4", fps=24
                 #, bitrate="8000k"
             )
@@ -168,9 +181,9 @@ class Machine:
     def no_local_loom(self, lead:dict):
         self.connect_local_loom(lead, "")
 
-    def generate_loom(self, screenshot_filepath:str, video_number:int)->str|None:
+    def generate_loom(self, screenshot_filepath:str, naming_arg:str)->str|None:
         # return output_filepath if success
-        output_filepath = self.output_filename_function(video_number)
+        output_filepath = self.output_filename_function(naming_arg)
         command = self.generate_command(screenshot_filepath, output_filepath)
         if VERBOSE:
             screenshot_basename = os.path.basename(screenshot_filepath)
@@ -206,7 +219,7 @@ class Machine:
                 continue
             output_filepath = self.generate_loom(
                 screenshot_filepath=screenshot_filepath,
-                video_number=i+1
+                naming_arg = lead[self.LEADLIST.email_key]
             )
             if output_filepath: # SUCCESS
                 self.connect_local_loom(lead, output_filepath)
@@ -234,7 +247,7 @@ class Machine:
 
             output_filepath = self.generate_loom(
                 screenshot_filepath=screenshot_filepath,
-                video_number=i+1
+                naming_arg=i+1
             )
             # no connect
             errors_count = 0 if output_filepath != None else errors_count + 1
