@@ -4,6 +4,7 @@ from google.oauth2 import service_account
 from googleapiclient.http import MediaFileUpload
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
+import requests
 import os.path
 import pickle
 import re
@@ -59,7 +60,11 @@ def authenticate_oauth()->googleapiclient.discovery.Resource|None:
                 return None
     try:
         SERVICE = googleapiclient.discovery.build('drive', 'v3', credentials=creds)
-        if VERBOSE: print("Logged in to Google Drive API successfully.")
+        about_info = SERVICE.about().get(fields="user").execute()
+        logging.info(f"Authenticated as: {about_info['user']['displayName']}")  # Display the authenticated user's name
+        if VERBOSE:
+            print("Logged in to Google Drive API successfully.")
+            print(f"Authenticated as: {about_info['user']['displayName']}")  # Display the authenticated user's name
         return SERVICE
     except Exception as e:
         logging.error(f"Error accessing Google Drive: {e}")
@@ -111,6 +116,13 @@ def file_exists(service:googleapiclient.discovery.Resource, filename:str, folder
     #todo
     pass
 
+def drive_link_works(video_link:str)->bool:
+    response = requests.get(video_link)
+    if response.status_code // 100 == 2:
+        return True
+    else:
+        return False
+
 def folder_exists(service:googleapiclient.discovery.Resource, folder_id:str)->bool:
     try:
         # Attempt to get the folder metadata
@@ -118,8 +130,14 @@ def folder_exists(service:googleapiclient.discovery.Resource, folder_id:str)->bo
         return True  # Folder exists
     except Exception as e:
         # If the folder does not exist, an error will be raised
-        logging.error(str(e))
+        logging.error(f"Folder id:{folder_id} doesn't exist . error - {e}")
         return False  # Folder does not exist
+
+def set_folder_id(service, folder_id:str):
+    global UPLOADING_FOLDER_ID
+    if folder_exists(service, folder_id):
+        UPLOADING_FOLDER_ID = folder_id
+
 
 def prompt_uploading_folder_link(): # UPLOADING_FOLDER_ID
     global UPLOADING_FOLDER_ID
@@ -218,7 +236,7 @@ def test()->None:
 
 def main():
     #test()
-    pass
+    authenticate_oauth()
 
 # Example usage
 if __name__ == "__main__":
