@@ -7,6 +7,7 @@ import requests
 import platform
 import time
 import csv
+import os
 
 SCREENSHOT_EXTENSION = ".png"
 
@@ -106,7 +107,18 @@ class Leadlist:
 			writer = csv.DictWriter(csvfile, fieldnames=self.csv_data[0].keys())
 			writer.writeheader()
 			writer.writerows(self.csv_data)
+	def clean_non_existing_screens(self)->bool:
+		for lead in self.csv_data:
+			screen_val = lead.get(SCREEN_FILEPATH_KEY)
+			if not os.path.isfile(str(screen_val)):
+				lead[SCREEN_FILEPATH_KEY] = ""
+				if VERBOSE: print(f"removed invalid screenshot path for {lead.get(self.email_key)}")
+		return True
 
+def set_leads_filepath(filepath:str):
+	global LEADS_FILEPATH
+	if os.path.isfile(filepath):
+		LEADS_FILEPATH = filepath
 
 def load_leadlist()->list[dict]:
 	global LEADS_FILEPATH # input
@@ -133,6 +145,13 @@ def prompt_wait_time():
 	while user_input=="0" or not user_input.isdigit():
 		user_input = input("Enter web page loading time (seconds)\n> ")
 	WEBPAGE_LOADING_TIME = int(user_input)
+
+def set_screenshots_folder(folder_path:str):
+	global SCREENSHOTS_DIR
+	if os.path.isdir(folder_path):
+		SCREENSHOTS_DIR = folder_path
+	else:
+		os.makedirs(folder_path)
 
 def prompt_screenshots_folder():
 	global SCREENSHOTS_DIR
@@ -194,13 +213,13 @@ def check_link(link:str)->bool:
 		print(f"{link} Error : {e}")
 		return None
 
-def get_links(lead:dict):
+def get_links(lead:dict, showLinkedin=False):
 	facebook = None
 	all_links = [(k,val) for k, val in lead.items() if is_link(val)]
 	links = [url for k, url in all_links if k != LEADLIST.website_key and k != LEADLIST.linkedin_key and check_link(url)]
 	#links = [url for k, url in all_links if k != "website" and k != "linkedIn" and check_link(url)]
 	# popped_facebook = [links.pop(i) for i in range(len(links)) if "facebook.com/" in links[i]]
-	
+	#
 	# get facebook
 	for i in range(len(links)):
 		if "facebook.com/" in links[i]:
@@ -210,11 +229,12 @@ def get_links(lead:dict):
 	website = lead.get(LEADLIST.website_key)
 	if check_link(website):
 		links.append(website) # add last to show
-	# get linkedin
-	linkedin = lead.get(LEADLIST.linkedin_key)
-	if linkedin:
-		links.append(linkedin) # add last to show
-	elif len(links)==0:	# still 0 links besides fb
+	if showLinkedin:
+		# get linkedin
+		linkedin = lead.get(LEADLIST.linkedin_key)
+		if linkedin:
+			links.append(linkedin) # add last to show
+	if len(links)==0:	# still 0 links besides fb
 		if facebook:
 			links.append(facebook)
 		else: # no website no fb no links
@@ -223,7 +243,7 @@ def get_links(lead:dict):
 	return links
 
 def screenshot_saving_name(lead:dict)->str:
-	return SCREENSHOTS_DIR + '/' + lead[LEADLIST.email_key] + SCREENSHOT_EXTENSION
+	return os.path.join(SCREENSHOTS_DIR, lead[LEADLIST.email_key] + SCREENSHOT_EXTENSION)
 	# todo: avoid dupls.
 
 def connect_local_screenshot(lead:dict, screenshot_filepath:str)->None:
